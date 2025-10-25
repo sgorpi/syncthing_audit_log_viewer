@@ -1,0 +1,64 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+}
+
+th,
+td {
+    border: 1px solid #ccc;
+    padding: 1px 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+.nowrap {
+    width: 4%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.deleted {
+    color: red;
+}
+
+.modified {
+    color: darkblue;
+}
+
+.grey {
+    color: grey;
+}
+
+#result {
+    margin-top: 15px;
+    font-weight: bold;
+    color: darkblue;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #202020;
+        color: #f0f0f0;
+    }
+
+    th {
+        background-color: #404040;
+    }
+
+    .modified {
+        color: lightblue;
+    }
+
+    #result {
+        color: lightblue;
+    }
+}
