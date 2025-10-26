@@ -92,18 +92,41 @@ function add_table_row_device_connection(tableBody, time, jsonData) {
     }
 }
 
+function add_table_row_startup_complete(tableBody, time, jsonData) {
+    const row = tableBody.insertRow(0)
+    add_table_cell_with_time(row, time)
+
+    // determine the basename of filepath in jsonData["data"]["path"]
+    var idx = 1
+    var cell = row.insertCell(idx++)
+    cell.className = "nowrap";
+    cell.innerHTML = "me"
+
+    cell = row.insertCell(idx++)
+    cell.className = "nowrap";
+    cell.innerHTML = "started"
+    cell = row.insertCell(idx++)
+
+    cell = row.insertCell(idx++)
+    cell.className = "grey";
+    cell.innerHTML = jsonData["data"]["myID"]
+}
+
 var log_object_map = {};
 function display() {
     const tableBody = document.querySelector("#dataTable tbody");
+    const type_map = {
+        "LocalChangeDetected": add_table_row_change_detected,
+        "RemoteChangeDetected": add_table_row_change_detected,
+        "DeviceConnected": add_table_row_device_connection,
+        "DeviceDisconnected": add_table_row_device_connection,
+        "StartupComplete": add_table_row_startup_complete,
+    }
     Object.keys(log_object_map).sort().forEach(time => {
         const jsonData = log_object_map[time];
         //console.log("Parsing: " + time + " = " + JSON.stringify(jsonData, null, 2))
-        if (jsonData["type"].includes("ChangeDetected")) {
-            add_table_row_change_detected(tableBody, time, jsonData)
-        } else if (jsonData["type"] == "DeviceConnected") {
-            add_table_row_device_connection(tableBody, time, jsonData)
-        } else if (jsonData["type"] == "DeviceDisconnected") {
-            add_table_row_device_connection(tableBody, time, jsonData)
+        if (jsonData["type"] in type_map) {
+            type_map[jsonData["type"]](tableBody, time, jsonData)
         } else {
             console.log("Ignored " + jsonData["type"])
         }
