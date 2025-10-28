@@ -17,7 +17,12 @@ td {
 }
 
 th {
+    vertical-align: top;
     background-color: #f2f2f2;
+}
+
+input {
+    border: 1px solid #ccc;
 }
 
 .nowrap {
@@ -46,12 +51,17 @@ th {
 
 @media (prefers-color-scheme: dark) {
     body {
-        background: #202020;
-        color: #f0f0f0;
+        background: #222;
+        color: #fff;
     }
 
     th {
-        background-color: #404040;
+        background-color: #444;
+    }
+
+    input {
+        background-color: #000;
+        color: #fff;
     }
 
     .modified {

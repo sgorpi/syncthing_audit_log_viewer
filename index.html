@@ -5,21 +5,32 @@
     <meta charset="UTF-8">
     <title>Syncthing Audit Log File Viewer</title>
     <link href="style.css" rel="stylesheet" type="text/css">
+    <link href="style_multiselect.css" rel="stylesheet" type="text/css">
+    <script src="js/jquery-3.7.1.min.js"></script>
+    <script src="js/jquery.multi-select.js"></script>
     <script src="syncthing_audit_log_parser.js"></script>
 </head>
 
 <body>
-    <h2>SyncThing Audit Log Parser</h2>
+    <h2>SyncThing Audit Log Viewer</h2>
     <input type="file" id="fileInput" accept=".log" multiple>
     <button id="parseBtn">Parse logs</button>
     <table id="dataTable">
         <thead>
             <tr>
-                <th class="nowrap">Time</th>
+                <!-- down = 9660, up = 9652 -->
+                <th class="nowrap">Time <a id="time_direction">&#9660;</span></th>
                 <th class="nowrap">Who</th>
                 <th class="nowrap">Action</th>
-                <th class="nowrap">Label</th>
-                <th>Path</th>
+                <th class="nowrap">
+                    Label<br />
+                    <select id="label_select" multiple>
+                    </select>
+                </th>
+                <th>
+                    Path<br />
+                    <input id="path_search" type="text" placeholder="search for..." />
+                </th>
             </tr>
         </thead>
         <tbody></tbody>
