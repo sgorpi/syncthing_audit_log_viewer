@@ -5,8 +5,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+/* eslint-env jquery */
 
 var typingTimer;
+var time_sort_descending = true;
 
 function add_table_cell_with_time(row, time) {
     const cell = row.insertCell(0)
@@ -18,26 +20,40 @@ function add_table_cell_with_time(row, time) {
 }
 
 
-var device_map = {}
+var device_hash_to_name = {}
+var device_name_to_hash = {}
 var folders = []
+function add_device_name_hash(name, hash) {
+    if (!(name in device_name_to_hash)) {
+        device_name_to_hash[name] = []
+    }
+    if (!device_name_to_hash[name].includes(hash)) {
+        device_name_to_hash[name].push(hash);
+    }
+}
 function fill_id_to_device_name_map(log_object_map) {
     Object.entries(log_object_map).forEach(([, jsonData]) => {
         var short_id = null
         if (jsonData["type"] == "DeviceConnected") {
             short_id = jsonData["data"]["id"].split("-")[0]
-            device_map[short_id] = jsonData["data"]["deviceName"];
-            device_map[jsonData["data"]["id"]] = jsonData["data"]["deviceName"];
+            device_hash_to_name[short_id] = jsonData["data"]["deviceName"];
+            device_hash_to_name[jsonData["data"]["id"]] = jsonData["data"]["deviceName"];
+            add_device_name_hash(jsonData["data"]["deviceName"], short_id);
+            add_device_name_hash(jsonData["data"]["deviceName"], jsonData["data"]["id"]);
         } else if (jsonData["type"] == "StartupComplete") {
             short_id = jsonData["data"]["myID"].split("-")[0]
-            device_map[short_id] = "me";
-            device_map[jsonData["data"]["myID"]] = "me";
+            device_hash_to_name[short_id] = "me";
+            device_hash_to_name[jsonData["data"]["myID"]] = "me";
+            add_device_name_hash("me", short_id);
+            add_device_name_hash("me", jsonData["data"]["myID"]);
         } else if (jsonData["type"].includes("ChangeDetected")) {
             if (!folders.includes(jsonData["data"]["label"])) {
                 folders.push(jsonData["data"]["label"])
             }
         }
     })
-    console.log(device_map)
+    console.log(device_hash_to_name)
+    console.log(device_name_to_hash)
     // update label select
     const label_select = $("#label_select")
     label_select.empty()
@@ -46,9 +62,17 @@ function fill_id_to_device_name_map(log_object_map) {
         label_select.append($("<option>", { value: val, text: val }))
         console.log("label: " + val)
     })
-    $("#label_select").data("plugin_multiSelect").updateMenuItems()
+    label_select.data("plugin_multiSelect").updateMenuItems()
 
-    return device_map;
+    const who_select = $("#who_select")
+    who_select.empty()
+    Object.keys(device_name_to_hash).forEach(who => {
+        who_select.append($("<option>", { value: who, text: who }))
+        console.log("who: " + who)
+    })
+    who_select.data("plugin_multiSelect").updateMenuItems()
+
+    return device_hash_to_name;
 }
 
 function get_device_name(device_map, id) {
@@ -71,7 +95,7 @@ function add_table_row_change_detected(tableBody, time, jsonData) {
 
         const cell = row.insertCell(1)
         cell.className = "nowrap";
-        cell.innerHTML = get_device_name(device_map, jsonData["data"]["modifiedBy"])
+        cell.innerHTML = get_device_name(device_hash_to_name, jsonData["data"]["modifiedBy"])
 
         var keys = ["action", "label", "path"]
         var idx = 2
@@ -94,7 +118,7 @@ function add_table_row_device_connection(tableBody, time, jsonData) {
     var idx = 1
     var cell = row.insertCell(idx++)
     cell.className = "nowrap";
-    cell.innerHTML = get_device_name(device_map, jsonData["data"]["id"])
+    cell.innerHTML = get_device_name(device_hash_to_name, jsonData["data"]["id"])
 
     cell = row.insertCell(idx++)
     cell.className = "nowrap";
@@ -141,11 +165,31 @@ function display() {
     }
     const tableBody = document.querySelector("#dataTable tbody");
     const path_search = $("#path_search").val()
+    const who_selected = $("#who_select").val()
+    const action_selected = $("#action_select").val()
     const label_selected = $("#label_select").val()
     console.log("Label selected: " + label_selected)
 
+    var who_hashes = []
+    if (who_selected.length > 0) {
+        $.each(who_selected, function (idx, who) {
+            who_hashes = who_hashes.concat(device_name_to_hash[who])
+        })
+        console.log(who_hashes)
+    }
     function matches_user_filter(jsonData) {
         var ret = true
+        if (who_hashes.length > 0) {
+            ret &= (who_hashes.includes(jsonData["data"]["id"])
+                || who_hashes.includes(jsonData["data"]["myID"])
+                || who_hashes.includes(jsonData["data"]["modifiedBy"])
+            );
+        }
+        if (action_selected.length > 0) {
+            ret &= (action_selected.includes(jsonData["type"]) ||
+                ("action" in jsonData["data"] && action_selected.includes("action__" + jsonData["data"]["action"]))
+            );
+        }
         if (label_selected.length > 0) {
             if ("label" in jsonData["data"]) {
                 ret &= label_selected.includes(jsonData["data"]["label"])
@@ -164,13 +208,14 @@ function display() {
     }
 
     tableBody.innerHTML = "";
-    Object.keys(log_object_map).sort().forEach(time => {
+    var keys = Object.keys(log_object_map).sort();
+    if (!time_sort_descending) {
+        keys.reverse()
+    }
+    keys.forEach(time => {
         const jsonData = log_object_map[time];
-        //console.log("Parsing: " + time + " = " + JSON.stringify(jsonData, null, 2))
         if (jsonData["type"] in type_map && matches_user_filter(jsonData)) {
             type_map[jsonData["type"]](tableBody, time, jsonData)
-        } else {
-            //console.log("Ignored " + jsonData["type"])
         }
     }
     )
@@ -226,6 +271,12 @@ $(document).ready(function () {
             reader.readAsText(file);
         }
     });
+    $("#time_head").on("click", function () {
+        time_sort_descending = !time_sort_descending;
+        $("#time_direction").html(time_sort_descending ? "&#9660;" : "&#9650;")
+        console.log("time_clicked " + time_sort_descending)
+        display()
+    })
     $("#path_search").on("keyup", function () {
         clearTimeout(typingTimer)
         typingTimer = setTimeout(display, 300)
@@ -233,9 +284,25 @@ $(document).ready(function () {
     $("#path_search").on("keydown", function () {
         clearTimeout(typingTimer)
     })
+    $("#who_select").multiSelect({
+        "allText": "-- everyone --",
+        "noneText": "-- everyone --",
+    })
+    $("#who_select").on("change", function () {
+        display()
+    })
+
+    $("#action_select").multiSelect({
+        "allText": "-- all --",
+        "noneText": "-- all --",
+    })
+    $("#action_select").on("change", function () {
+        display()
+    })
+
     $("#label_select").multiSelect({
-        "allText": "-- everything --",
-        "noneText": "-- everything --",
+        "allText": "-- all --",
+        "noneText": "-- all --",
     })
     $("#label_select").on("change", function () {
         display()

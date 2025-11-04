@@ -1,4 +1,6 @@
 import js from "@eslint/js";
+import jquery from "eslint-plugin-jquery"
+import dollarsign from "eslint-plugin-dollar-sign"
 import html from "@html-eslint/eslint-plugin"
 import globals from "globals";
 import { defineConfig } from "eslint/config";
@@ -6,11 +8,18 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs}"],
-    plugins: { js },
+    plugins: {
+      js, jquery, dollarsign
+    },
     extends: ["js/recommended"],
     languageOptions: {
-      globals: globals.browser
-    }
+      globals: {
+        ...globals.browser,
+        ...globals.commonjs,
+        ...globals.es6,
+        ...globals.jquery
+      }
+    },
   },
   {
     files: ["**/*.html"],
@@ -26,7 +35,7 @@ export default defineConfig([
 ]);
 
 /**
- * npm install --save-dev eslint @html-eslint/parser @html-eslint/eslint-plugin @eslint/js
+ * npm install --save-dev eslint @html-eslint/parser @html-eslint/eslint-plugin @eslint/js eslint-plugin-jquery eslint-plugin-dollar-sign
  * 
  * npx eslint <file>
  */

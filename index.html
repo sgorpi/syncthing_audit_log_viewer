@@ -8,7 +8,7 @@
     <link href="style_multiselect.css" rel="stylesheet" type="text/css">
     <script src="js/jquery-3.7.1.min.js"></script>
     <script src="js/jquery.multi-select.js"></script>
-    <script src="syncthing_audit_log_parser.js"></script>
+    <script src="js/syncthing_audit_log_viewer.js"></script>
 </head>
 
 <body>
@@ -19,17 +19,28 @@
         <thead>
             <tr>
                 <!-- down = 9660, up = 9652 -->
-                <th class="nowrap">Time <a id="time_direction">&#9660;</span></th>
-                <th class="nowrap">Who</th>
-                <th class="nowrap">Action</th>
+                <th class="nowrap" id="time_head">Time <span id="time_direction">&#9660;</span></th>
                 <th class="nowrap">
-                    Label<br />
-                    <select id="label_select" multiple>
+                    Who<br>
+                    <select id="who_select" name="who_select" multiple></select>
+                </th>
+                <th class="nowrap">
+                    Action<br>
+                    <select id="action_select" name="action_select" multiple>
+                        <option value="DeviceConnected">connected</option>
+                        <option value="DeviceDisconnected">disconnected</option>
+                        <option value="StartupComplete">started</option>
+                        <option value="action__modified">modified</option>
+                        <option value="action__deleted">deleted</option>
                     </select>
                 </th>
+                <th class="nowrap">
+                    Label<br>
+                    <select id="label_select" name="label_select" multiple></select>
+                </th>
                 <th>
-                    Path<br />
-                    <input id="path_search" type="text" placeholder="search for..." />
+                    Path<br>
+                    <input id="path_search" type="text" placeholder="search for...">
                 </th>
             </tr>
         </thead>
