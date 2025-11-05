@@ -285,24 +285,24 @@ $(document).ready(function () {
         clearTimeout(typingTimer)
     })
     $("#who_select").multiSelect({
-        "allText": "-- everyone --",
-        "noneText": "-- everyone --",
+        "allText": "- everyone -",
+        "noneText": "- everyone -",
     })
     $("#who_select").on("change", function () {
         display()
     })
 
     $("#action_select").multiSelect({
-        "allText": "-- all --",
-        "noneText": "-- all --",
+        "allText": "- all -",
+        "noneText": "- all -",
     })
     $("#action_select").on("change", function () {
         display()
     })
 
     $("#label_select").multiSelect({
-        "allText": "-- all --",
-        "noneText": "-- all --",
+        "allText": "- all -",
+        "noneText": "- all -",
     })
     $("#label_select").on("change", function () {
         display()

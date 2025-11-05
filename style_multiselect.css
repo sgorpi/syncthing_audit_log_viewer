@@ -1,6 +1,7 @@
 .multi-select-container {
     display: inline-block;
     position: relative;
+    font-weight: normal;
 }
 
 .multi-select-menu {
@@ -54,14 +55,13 @@
     font-size: 0.875em;
     padding: 0.1em 0.6em;
     max-width: 10em;
-    width: 6em;
+    width: 6.5em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     cursor: default;
 }
 
@@ -78,7 +78,6 @@
 
 .multi-select-container--open .multi-select-menu {
     display: block;
-    border: 1px solid red;
 }
 
 .multi-select-container--open .multi-select-button:after {
