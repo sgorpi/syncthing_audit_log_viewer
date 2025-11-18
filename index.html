@@ -13,9 +13,10 @@
 
 <body>
     <h2>SyncThing Audit Log Viewer</h2>
-    <input type="file" id="fileInput" accept=".log" multiple>
-    <button id="parseBtn">Parse logs</button>
-    <table id="dataTable">
+    <input type="file" id="file_input" accept=".log" multiple>
+    <button id="parse_button">Parse logs</button>
+    &nbsp; <span id="parse_status"></span>
+    <table id="data_table">
         <thead>
             <tr>
                 <!-- down = 9660, up = 9652 -->
@@ -41,6 +42,10 @@
                 <th>
                     Path<br>
                     <input id="path_search" type="text" placeholder="search for...">
+                    <label>
+                        <input id="path_search_exclude" type="checkbox">
+                        exclude
+                    </label>
                 </th>
             </tr>
         </thead>

@@ -154,17 +154,18 @@ function add_table_row_startup_complete(tableBody, time, jsonData) {
 }
 
 
+const type_display_function_map = {
+    "LocalChangeDetected": add_table_row_change_detected,
+    "RemoteChangeDetected": add_table_row_change_detected,
+    "DeviceConnected": add_table_row_device_connection,
+    "DeviceDisconnected": add_table_row_device_connection,
+    "StartupComplete": add_table_row_startup_complete,
+}
 var log_object_map = {};
 function display() {
-    const type_map = {
-        "LocalChangeDetected": add_table_row_change_detected,
-        "RemoteChangeDetected": add_table_row_change_detected,
-        "DeviceConnected": add_table_row_device_connection,
-        "DeviceDisconnected": add_table_row_device_connection,
-        "StartupComplete": add_table_row_startup_complete,
-    }
-    const tableBody = document.querySelector("#dataTable tbody");
+    const tableBody = document.querySelector("#data_table tbody");
     const path_search = $("#path_search").val()
+    const path_search_excluded = $("#path_search_exclude").is(":checked") && path_search.length > 0
     const who_selected = $("#who_select").val()
     const action_selected = $("#action_select").val()
     const label_selected = $("#label_select").val()
@@ -198,11 +199,11 @@ function display() {
             }
         }
         if ("path" in jsonData["data"]) {
-            ret &= (jsonData["data"]["path"].toLowerCase().includes(path_search));
+            ret &= path_search_excluded ^ (jsonData["data"]["path"].toLowerCase().includes(path_search));
         } else if ("id" in jsonData["data"]) {
-            ret &= (jsonData["data"]["id"].toLowerCase().includes(path_search));
+            ret &= path_search_excluded ^ (jsonData["data"]["id"].toLowerCase().includes(path_search));
         } else if ("myID" in jsonData["data"]) {
-            ret &= (jsonData["data"]["myID"].toLowerCase().includes(path_search));
+            ret &= path_search_excluded ^ (jsonData["data"]["myID"].toLowerCase().includes(path_search));
         }
         return ret;
     }
@@ -214,8 +215,8 @@ function display() {
     }
     keys.forEach(time => {
         const jsonData = log_object_map[time];
-        if (jsonData["type"] in type_map && matches_user_filter(jsonData)) {
-            type_map[jsonData["type"]](tableBody, time, jsonData)
+        if (jsonData["type"] in type_display_function_map && matches_user_filter(jsonData)) {
+            type_display_function_map[jsonData["type"]](tableBody, time, jsonData)
         }
     }
     )
@@ -225,19 +226,24 @@ function parse(auditlog_txt, file) {
     const resultDiv = $("#result");
     try {
         const lines = auditlog_txt.split("\n")
+        var stored = 0;
         for (var line = 0; line < lines.length; line++) {
             try {
                 if (lines[line].length < 2)
                     continue;
                 const jsonData = JSON.parse(lines[line]);
                 var time = jsonData["time"] ?? "";
-                log_object_map[time] = jsonData;
+
+                if (jsonData["type"] in type_display_function_map) { // reduce memory consumption
+                    log_object_map[time] = jsonData;
+                    stored++;
+                }
 
             } catch (err) {
                 resultDiv.append("Invalid JSON line " + line + ": '" + lines[line] + " -- " + err + "'<br/>");
             }
         }
-        resultDiv.append("Loaded " + lines.length + " lines of log from " + file.name + "<br />");
+        resultDiv.append("Loaded " + lines.length + " lines, storing " + stored + " from " + file.name + "<br />");
     } catch (err) {
         resultDiv.innerHTML += "Error parsing: " + err + "<br />";
     }
@@ -245,26 +251,27 @@ function parse(auditlog_txt, file) {
 
 
 $(document).ready(function () {
-    //alert('loaded')
-    $("#parseBtn").on("click", function () {
-        const fileInput = document.getElementById("fileInput");
+    $("#parse_button").on("click", function () {
+        const file_input = document.getElementById("file_input");
         const resultDiv = $("#result");
 
         resultDiv.html("");
 
-        if (fileInput.files.length === 0) {
-            resultDiv.append("Please select a JSON file first.");
+        if (file_input.files.length === 0) {
+            $("#parse_status").html("<span style='color: red;'>Please select a JSON file first.</span>")
             return;
         }
         var num_loaded = 0
-        for (var i = 0; i < fileInput.files.length; i++) {
-            const file = fileInput.files[i];
+        for (var i = 0; i < file_input.files.length; i++) {
+            $("#parse_status").text("Parsing " + (i + 1) + "/" + file_input.files.length + "...")
+            const file = file_input.files[i];
             const reader = new FileReader();
             reader.onload = function (e) {
                 parse(e.target.result, file)
                 num_loaded++;
-                if (num_loaded === fileInput.files.length) {
+                if (num_loaded === file_input.files.length) {
                     fill_id_to_device_name_map(log_object_map);
+                    $("#parse_status").text("")
                     display()
                 }
             };
@@ -283,6 +290,9 @@ $(document).ready(function () {
     })
     $("#path_search").on("keydown", function () {
         clearTimeout(typingTimer)
+    })
+    $("#path_search_exclude").on("change", function () {
+        display();
     })
     $("#who_select").multiSelect({
         "allText": "- everyone -",

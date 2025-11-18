@@ -25,6 +25,10 @@ input {
     border: 1px solid #ccc;
 }
 
+label {
+    font-weight: normal;
+}
+
 .nowrap {
     width: 4%;
     white-space: nowrap;
